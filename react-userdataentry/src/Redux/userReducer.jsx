@@ -17,21 +17,20 @@ const userSlice = createSlice({
             state.user = [...state.user, user]
         },
         deleteUser: (state, deleteduser)=>{
-            console.log(deleteUser)
             state.user = current(state).user.filter(us=>{
-                console.log(us)
-                if(us.payload.firstName !== deleteduser.payload.firstName || us.payload.lastName !== deleteduser.payload.lastName){
+                if(us.payload.id !== deleteduser.payload.id){
                     return us
                 }
             })
         },
         updateUser: (state, user)=>{
-            current(state).user.forEach(us=>{
-                if(us.payload.firstName === user.payload.firstName && us.payload.lastName === user.payload.lastName){
-                    us.payload = user.payload
-                    return 
+            state.user = current(state).user.map(us=>{
+                if(us.payload.id === user.payload.id){
+                    return user
                 }
+                return us
             })
+            console.log(state.user)
         }
     }
 })

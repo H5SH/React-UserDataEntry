@@ -1,17 +1,22 @@
-import {Formik, Field, ErrorMessage, Form} from "formik"
+import {Formik, Field, ErrorMessage, Form, useFormik} from "formik"
 import pad from "../pad"
-import userStore, { addUser } from "../Redux/userReducer"
+import userStore, { addUser, updateUser } from "../Redux/userReducer"
 import * as Yup from 'yup'
 import { useState } from "react"
 import { useLocation } from "react-router-dom"
+import idStore, { incriment } from "../Redux/idReducer"
+import "./MainForm.css"
 
 function MainForm(){
     const date = new Date()
-    const [refresh, Refresh] = useState(false)
+
+    const [updateButton, setUpdateButton] = useState(false)
     const [response, setResponse] = useState('')
     const user = useLocation()
-    console.log(user)
+
+    let id = 0
     let count = 0
+
     const profesions = [
         "None",
         "Computer Scientist",
@@ -21,15 +26,33 @@ function MainForm(){
         "Pilot",
         "UnEmployed"
     ]
+
+    function handleUpdate(values){
+        console.log("handleUpdate")
+        userStore.dispatch(updateUser(values))
+        setResponse("User Updated")
+        window.setTimeout(()=>{
+            setResponse('')
+        },2000)
+    }
     // const formik = useFormik({
-    //     initialValues:{
-    //         id: ++id,
-    //         firstName: '',
-    //         lastName: '',
-    //         email: '',
-    //         dateOfBirth: `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`,
-    //         profesion: 'None',
-    //     },
+    //     enableReinitialize: true,
+    //     initialValues: user.state === null ?
+    //          {
+    //                 id: idStore.getState().id,
+    //                 firstName: '',
+    //                 lastName: '',
+    //                 email: '',
+    //                 dateOfBirth: `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`,
+    //                 profesion: ''
+    //             }: {
+    //                 id: user.state.id,
+    //                 firstName: user.state.firstName,
+    //                 lastName: user.state.lastName,
+    //                 email: user.state.email,
+    //                 dateOfBirth: user.state.dateOfBirth,
+    //                 profesion: user.state.profesion
+    //             },
     //     validationSchema: Yup.object({
     //         id: Yup.number().positive().integer(),
     //         firstName: Yup.string().required("Please enter your First Name").min(2, "Top Short").max(50, "Too Long"),
@@ -39,8 +62,20 @@ function MainForm(){
     //         profesion: Yup.string()
     //     }),
     //     onSubmit: (values, {resetForm}) => {
-    //         userStore.dispatch(addUser(values))
-    //         resetForm()
+    //         if(updateButton){
+    //                     console.log("UpdateButton")
+    //                     userStore.dispatch(updateUser(values))
+    //                     setResponse("User Updated")
+    //                 }else{
+    //                     console.log("NotUpdateButton")
+    //                     idStore.dispatch(incriment())
+    //                     userStore.dispatch(addUser(values))
+    //                     setResponse("User Added")
+    //                     resetForm()
+    //                 }
+    //                 window.setTimeout(()=>{
+    //                     setResponse('')
+    //                 },2000)
     //     }
     // })
     return(
@@ -49,12 +84,14 @@ function MainForm(){
             <Formik
             enableReinitialize
             initialValues={user.state === null ? {
+                id: idStore.getState().id,
                 firstName: '',
                 lastName: '',
                 email: '',
                 dateOfBirth: `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`,
                 profesion: ''
             }: {
+                id: user.state.id,
                 firstName: user.state.firstName,
                 lastName: user.state.lastName,
                 email: user.state.email,
@@ -70,20 +107,30 @@ function MainForm(){
                     profesion: Yup.string()
                 })
             }
-            onSubmit={(values, {resetForm}, e) => {
-                console.log(e.target)
-                userStore.dispatch(addUser(values))
-                setResponse("User Added")
+            onSubmit={(values, {resetForm}) => {
+                if(updateButton){
+                    console.log("UpdateButton")
+                    userStore.dispatch(updateUser(values))
+                    setResponse("User Updated")
+                }else{
+                    console.log("NotUpdateButton")
+                    idStore.dispatch(incriment())
+                    userStore.dispatch(addUser(values))
+                    setResponse("User Added")
+                    resetForm()
+                }
                 window.setTimeout(()=>{
                     setResponse('')
                 },2000)
-                resetForm()
+              
             }}
             >
                 <Form>
                     <label htmlFor="firstName">First Name</label>
                     <Field name="firstName" type="text" />
-                    <ErrorMessage name="firstName" />
+                    <ErrorMessage name="firstName">
+                        {msg => <div className="Error">{msg}</div>}
+                    </ErrorMessage>
 
                     <label htmlFor="lastName">Last Name</label>
                     <Field name="lastName" type="text"/>
@@ -106,11 +153,10 @@ function MainForm(){
                     <ErrorMessage name="profession" />
 
                     {user.state === null ? 
-                    <button type="submit">Add</button>:
-                    <button onClick={}>Update</button>}
-                    
-
+                    <button type="submit" onClick={()=> setUpdateButton(false)}>Add</button>:
+                    <button type="submit" onClick={()=> setUpdateButton(true)}>Update</button>}
                 </Form>
+      
             </Formik>
         </div>
     )
